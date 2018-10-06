@@ -21,14 +21,32 @@ for i in range(hfiles):
     hams.append(text)
     file.close()
 
-hams = []
-hamfiles = sorted(glob.glob(ham_address+'*.txt'))
-hfiles = len(hamfiles)
-for i in range(hfiles):
-    file = open(hamfiles[i], 'rt')
+spams = []
+spamfiles = sorted(glob.glob(spam_address+'*.txt'))
+sfiles = len(spamfiles)
+for i in range(sfiles):
+    file = open(spamfiles[i], 'rt', encoding="latin-1")
     text = file.read()
-    hams.append(text)
+    spams.append(text)
     file.close()
+
+def embed_one_sample(onelist):
+    one_bag = {}
+    tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
+    token = tokenizer.tokenize(onelist)
+    stemmed = []
+    one_bag = {}
+    for w in token:
+        stemmed.append(ps.stem(w))
+    nstem = len(stemmed)
+    for j in range(nstem):
+        key = stemmed[j]
+        if key in one_bag:
+            one_bag[key] += 1
+        else:
+            one_bag[key] = 1
+    
+    return one_bag
 
 def embed_one(datalist):
     """
@@ -276,7 +294,6 @@ def Decision_Tree_Test(test, DT_node):
     else:
         return Decision_Tree_Test(test, DT_node.right)
     
-
 def Decision_Tree(test, train1, train2, train1_sum, train2_sum, nfeature=5):
     """
     Compute Entropy of test which overlaps with the training sets with Decision Tree
@@ -297,14 +314,16 @@ def Decision_Tree(test, train1, train2, train1_sum, train2_sum, nfeature=5):
     
     ntest = len(test)
     scores = np.zeros(ntest)
+    embedded = embed_one(test)
     
     for n in range(ntest):
-        testing = embed_one(test)[n]
+        testing = embedded[n]
         scores[n] = Decision_Tree_Test(testing, DT_node)
     
     return scores
-           
+            
 
+    
 def Naive_Bayes(test, train, prior=1500/5172):
     """
     Compute the score of test with respect to training sets using Naive Bayes
@@ -319,11 +338,12 @@ def Naive_Bayes(test, train, prior=1500/5172):
     all_train_vals = sum(list(train.values())) ## sum of all occurances
     
     ### find the overlapping term
-    testing = embed_one(test)[0]
+    testing = embed_one_sample(test)
     testkeys = testing.keys()
     ntest = len(testkeys)
     
     score = prior
+    log_score = np.log10(prior)
     
     for i in range(ntest):
         denominator = (all_train_vals + ntest+1)
@@ -331,10 +351,13 @@ def Naive_Bayes(test, train, prior=1500/5172):
         if tkey in train_keys:
             multi_factor = testing[tkey]
             score *= ((train[tkey] + 1) / denominator)**(multi_factor)
+            log_score += multi_factor * np.log10((train[tkey] + 1) / denominator)
         else:
             score *= 1 / denominator
+            log_score += np.log10(1 / denominator)
             
-    return score
+    return log_score
+
 
 
 def NN_Distances(test, train, nn_option='L2'):
@@ -348,7 +371,8 @@ def NN_Distances(test, train, nn_option='L2'):
     
     Returns to the array of distances
     """
-    testing = embed_one(test)[0] ## because it's just one
+    testing = embed_one_sample(test) ## because it's just one
+    #print (testing)
     testkeys = testing.keys()
     ntest = len(testkeys)
 
@@ -367,9 +391,10 @@ def NN_Distances(test, train, nn_option='L2'):
                 pass
             
         one_eval = np.array(list(one_eval.values()))
-        #print (one_eval)
-        if nn_option == 'L1' or nn_option == 'Linf':
-            dist[i] = sum(np.abs(one_eval))
+        if nn_option == 'L1':
+            dist[i] = np.sum(np.abs(one_eval))
+        elif nn_option == 'Linf':
+            dist[i] = np.max(np.abs(one_eval))
         elif nn_option == 'L2':
             dist[i] = np.sqrt(sum(one_eval**2))
             
@@ -384,7 +409,10 @@ def Classifier(new, one, two, option='NB', nn_option='L2', dt_option=50):
     """
     
     ntest = len(new)
-    scores = np.zeros((ntest,2))
+    scores = np.zeros(ntest)
+    nnew = len(new)
+    none = len(one)
+    ntwo = len(two)
     if option in ['NN', 'DT']:
         one_bag = embed_one(one) 
         two_bag = embed_one(two)
@@ -396,17 +424,21 @@ def Classifier(new, one, two, option='NB', nn_option='L2', dt_option=50):
         for n in range(ntest):
             dist_one = NN_Distances(new[n], one_bag, nn_option)
             dist_two = NN_Distances(new[n], two_bag, nn_option)
-            if nn_option == 'L1' or nn_option == 'L2':
-                scores[n,0] = 1 / np.sum(dist_one) ## only for NN smaller number signifies better score
-                scores[n,1] = 1 / np.sum(dist_two)
-            elif nn_option == 'Linf':
-                scores[n,0] = np.max(dist_one)
-                scores[n,1] = np.max(dist_two)
+            print ('scores1', dist_one, 'scores2', dist_two)
+            
+            scores1 = 1 / np.min(dist_one) ## only for NN smaller number signifies better score
+            scores2 = 1 / np.min(dist_two)
+                
+            if scores1 > scores2:
+                scores[n] = 1.
 
     elif option == 'NB':
-        for n in range(ntest):
-            scores[n,0] = Naive_Bayes(new[n], one_bag)
-            scores[n,1] = Naive_Bayes(new[n], two_bag)
+        for n in range(ntest):    
+            scores1 = Naive_Bayes(new[n], one_bag, prior=nnew/none)
+            scores2 = Naive_Bayes(new[n], two_bag, prior=nnew/ntwo)
+            if scores1 > scores2:
+                scores[n] = 1.
+            
 
     elif option == 'DT':
         one_sum_bag = embed_whole(one)
@@ -416,11 +448,69 @@ def Classifier(new, one, two, option='NB', nn_option='L2', dt_option=50):
             
     return scores
 
+def analyze_classifier_results(scores):
+    """
+    Compute the percentage of classifier
+    """
+    right = np.count_nonzero(scores)
+    total = len(scores)
+    return right/total * 100
 
+hams_array = np.array(hams.copy())
+spams_array = np.array(spams.copy())
 
+## CASE of Ham=1000, Spam=300
+random_draw0 = np.random.random_integers(0,3500,1000)
+ramdom_draw1 = np.random.random_integers(0,1499,300)
 
+ham_test_index = np.array(list(set(np.arange(len(hams)))- set(random_draw0))[:100])
+spam_test_index = np.array(list(set(np.arange(len(spams)))- set(ramdom_draw1))[:100])
 
+ham_testing = hams_array[[ham_test_index]]
+spam_testing = spams_array[[spam_test_index]]
 
+ham_training = hams_array[[random_draw0]]
+spam_training = spams_array[[ramdom_draw1]]
+
+### evaluate
+nnl1_scores_ham = Classifier(ham_testing, ham_training, spam_training, option='NN', nn_option='L1')
+nnl1_scores_spam = Classifier(spam_testing, ham_training, spam_training, option='NN', nn_option='L1')
+
+nnl2_scores_ham = Classifier(ham_testing, ham_training, spam_training, option='NN', nn_option='L2')
+nnl2_scores_spam = Classifier(spam_testing, ham_training, spam_training, option='NN', nn_option='L2')
+
+nnlinf_scores_ham = Classifier(ham_testing, ham_training, spam_training, option='NN', nn_option='Linf')
+nnlinf_scores_spam = Classifier(spam_testing, ham_training, spam_training, option='NN', nn_option='Linf')
+
+nb_scores_ham = Classifier(ham_testing, ham_training, spam_training, option='NB')
+nb_scores_spam = Classifier(spam_testing, ham_training, spam_training, option='NB')
+
+dtscores_spam10 = Classifier(spam_testing, ham_training, spam_training, option='DT', dt_option=10)
+dtscores_ham10 = Classifier(ham_testing, ham_training, spam_training, option='DT', dt_option=10)
+
+dtscores_spam100 = Classifier(spam_testing, ham_training, spam_training, option='DT', dt_option=100)
+dtscores_ham100 = Classifier(ham_testing, ham_training, spam_training, option='DT', dt_option=100)
+
+n11ham=analyze_classifier_results(nnl1_scores_ham)
+n11spam=100-analyze_classifier_results(nnl1_scores_spam)
+
+n12ham=analyze_classifier_results(nnl2_scores_ham)
+n12spam=100-analyze_classifier_results(nnl2_scores_spam)
+
+n1infham=analyze_classifier_results(nnlinf_scores_ham)
+n1infspam=100-analyze_classifier_results(nnlinf_scores_spam)
+
+nbham=analyze_classifier_results(nb_scores_ham)
+nbspam=100-analyze_classifier_results(nb_scores_spam)
+
+dt10ham=analyze_classifier_results(dtscores_spam10)
+dt10spam=100 - analyze_classifier_results(dtscores_ham10)
+
+dt100ham=analyze_classifier_results(dtscores_spam100)
+dt100spam=100 - analyze_classifier_results(dtscores_ham100)
+
+result_index = ['nn1_ham', 'nn1_spam', 'nn2_ham','nn2_spam','nninf_ham','nninf_spam','nb_ham','nb_spam','dt10_ham','dt10_spam','dt100_ham','dt100_spam']
+resulth1000_s300 = np.array([n11ham,n11spam,n12ham,n12spam,n1infham,n1infspam,nbham,nbspam,dt10ham,dt10spam,dt100ham,dt100spam])
 
 
 
