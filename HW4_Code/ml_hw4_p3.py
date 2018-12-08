@@ -97,11 +97,21 @@ for i in range(9):
         df_mat[i,j] = int(distance_df[cities[i]][cities[j]])
     
 
-init = np.random.random_integers(low=-100, high=100, size=16)
-mockcity_dict = {'NYC':[0,0], 'BOS':[init[0], init[1]], 'DC':[init[2], init[3]], 'MIA':[init[4], init[5]],
-                 'CHI':[init[6], init[7]], 'SEA':[init[8], init[9]], 'SF':[init[10], init[11]],
-                 'LA':[init[12], init[13]], 'DEN':[init[14], init[15]]}
+init_x = np.random.random_integers(low=20, high=50, size=9)
+init_y = np.random.random_integers(low=-150, high=-60, size=9)
+mockcity_dict = {'BOS':[init_x[0], init_y[0]], 'NYC':[init_x[1], init_y[1]], 'DC':[init_x[2], init_y[2]], 'MIA':[init_x[3], init_y[3]],
+                 'CHI':[init_x[4], init_y[4]], 'SEA':[init_x[5], init_y[5]], 'SF':[init_x[6], init_y[6]],
+                 'LA':[init_x[7], init_y[7]], 'DEN':[init_x[8], init_y[8]]}
 
+actual = {'BOS': array([ 42.3600825, -71.0588801]),
+ 'CHI': array([41.8781136, -87.6297982]),
+ 'DC': array([38.9071923,-77.0368707]),
+ 'DEN': array([39.7392358, -104.990251]),
+ 'LA': array([34.0522342,  -118.2436849]),
+ 'MIA': array([25.7616798, -80.1917902]),
+ 'NYC': array([40.7127837, -74.0059413]),
+ 'SEA': array([47.6062095,  -122.3320708]),
+ 'SF': array([37.7749295,-122.4194155])}
 
 result= compute_GD(df_mat,mockcity_dict, learning_rate=0.001, precision=100)
 print (result)
