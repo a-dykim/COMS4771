@@ -35,25 +35,23 @@ def compute_distances(coordinates):
     return np.array(distance_matrix)
 
     
-def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100):
+def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=10000):
     """
     Compute GD on all cities
     """
     cities = ['BOS', 'NYC', 'DC', 'MIA', 'CHI', 'SEA', 'SF', 'LA', 'DEN']
     ncity = len(cities)
     dist_new = compute_distances(coord) ## compute all distance matrix 
-    error = np.sqrt(np.sum(dist_mat - dist_new)**2) ## set as the sqrt of discrepancy function
+    error_new = np.sum(dist_mat - dist_new)**2 ## set as the sqrt of discrepancy function
     now = coord.copy()
     old = coord.copy()
     niter = 0
-    error_new = 1e5
-    while error > precision:
-    #and niter < maxiter:
+    while error > precision 
+#and niter < maxiter:
         error_old = error_new
         deltas = {}
         for i in range(ncity):
             fix = np.array(coord[cities[i]])
-            #print (cities[i])
             mini = np.zeros((ncity,2))
             for j in range(ncity):
                 if i == j:
@@ -63,22 +61,17 @@ def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100
                     mini[j] = (dist_new[i][j] - dist_mat[i][j])/dist_new[i][j] * (fix-subtract) 
                     
             deltas[cities[i]] = np.sum(mini, axis=0) # \sum_j (x_i - x_j)
-            #print (deltas)
         for k in range(ncity):    
             city = cities[k]
             now[city] = old[city] - learning_rate * deltas[city]
-            #print (city)
-            #print (now[city])
-            #print (deltas[city])
         
         dist_new = compute_distances(now)
-        #print (dist_new[0])
-        error_new = np.sqrt(np.sum((dist_new - dist_mat)**2))
+        error_new = np.sum((dist_new - dist_mat)**2)
         old = now
         niter += 1
-        print (error_new)
         if error_new > error_old:
             return now
+
     return now 
 
 
@@ -96,25 +89,18 @@ for i in range(9):
     for j in range(9):
         df_mat[i,j] = int(distance_df[cities[i]][cities[j]])
     
-
-init_x = np.random.random_integers(low=20, high=50, size=9)
-init_y = np.random.random_integers(low=-150, high=-60, size=9)
-mockcity_dict = {'BOS':[init_x[0], init_y[0]], 'NYC':[init_x[1], init_y[1]], 'DC':[init_x[2], init_y[2]], 'MIA':[init_x[3], init_y[3]],
-                 'CHI':[init_x[4], init_y[4]], 'SEA':[init_x[5], init_y[5]], 'SF':[init_x[6], init_y[6]],
-                 'LA':[init_x[7], init_y[7]], 'DEN':[init_x[8], init_y[8]]}
-
-actual = {'BOS': [ 42.3600825, -71.0588801],
- 'CHI': [41.8781136, -87.6297982],
- 'DC': [38.9071923,-77.0368707],
- 'DEN':[39.7392358, -104.990251],
- 'LA': [34.0522342,  -118.2436849],
- 'MIA':[25.7616798, -80.1917902],
- 'NYC': [40.7127837, -74.0059413],
- 'SEA': [47.6062095,  -122.3320708],
- 'SF': [37.7749295,-122.4194155]}
+init_dist = {'BOS': array([ 0, 0]),
+ 'SF': array([-3095, 0]),
+ 'MIA': array([-407, 1447]),
+ 'NYC': array([-163, 125]),
+ 'DC': array([-311, 294]),
+ 'CHI': array([-956, 115]),
+ 'SEA': array([-2872, -776]),              
+ 'LA': array([-2957, 353]),
+ 'DEN': array([-1914, -363])}
 
 
-result= compute_GD(df_mat,mockcity_dict, learning_rate=0.001, precision=100)
+result= compute_GD(df_mat,init_dict, learning_rate=0.001, precision=10000)
 print (result)
 
 
