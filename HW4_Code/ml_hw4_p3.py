@@ -46,7 +46,7 @@ def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100
     now = coord.copy()
     old = coord.copy()
     niter = 0
-    while error > precision 
+    while error_new > precision: 
 #and niter < maxiter:
         error_old = error_new
         deltas = {}
@@ -67,6 +67,7 @@ def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100
         
         dist_new = compute_distances(now)
         error_new = np.sum((dist_new - dist_mat)**2)
+        print (error_new)
         old = now
         niter += 1
         if error_new > error_old:
@@ -89,18 +90,18 @@ for i in range(9):
     for j in range(9):
         df_mat[i,j] = int(distance_df[cities[i]][cities[j]])
     
-init_dist = {'BOS': array([ 0, 0]),
- 'SF': array([-3095, 0]),
- 'MIA': array([-407, 1447]),
- 'NYC': array([-163, 125]),
- 'DC': array([-311, 294]),
- 'CHI': array([-956, 115]),
- 'SEA': array([-2872, -776]),              
- 'LA': array([-2957, 353]),
- 'DEN': array([-1914, -363])}
+init_dic = {'BOS': [ 0, 0],
+ 'SF': [-3095, 0],
+ 'MIA': [-407, 1447],
+ 'NYC': [-163, 125],
+ 'DC': [-311, 294],
+ 'CHI': [-956, 115],
+ 'SEA': [-2872, -776],              
+ 'LA': [-2957, 353],
+ 'DEN': [-1914, -363]}
 
 
-result= compute_GD(df_mat,init_dict, learning_rate=0.001, precision=10000)
+result= compute_GD(df_mat,init_dic, learning_rate=0.001, precision=10000)
 print (result)
 
 
