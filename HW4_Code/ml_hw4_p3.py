@@ -42,7 +42,7 @@ def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100
     cities = ['BOS', 'NYC', 'DC', 'MIA', 'CHI', 'SEA', 'SF', 'LA', 'DEN']
     ncity = len(cities)
     dist_new = compute_distances(coord) ## compute all distance matrix 
-    error_new = np.sum(dist_mat - dist_new)**2 ## set as the sqrt of discrepancy function
+    error_new = np.sum((dist_mat - dist_new)**2) ## set as the sqrt of discrepancy function
     now = coord.copy()
     old = coord.copy()
     niter = 0
