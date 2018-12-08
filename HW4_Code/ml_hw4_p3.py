@@ -79,7 +79,7 @@ def compute_GD(dist_mat, coord, maxiter=1000, learning_rate=0.001, precision=100
         print (error_new)
         if error_new > error_old:
             return now
-            
+    return now 
 
 
 
@@ -103,15 +103,16 @@ mockcity_dict = {'BOS':[init_x[0], init_y[0]], 'NYC':[init_x[1], init_y[1]], 'DC
                  'CHI':[init_x[4], init_y[4]], 'SEA':[init_x[5], init_y[5]], 'SF':[init_x[6], init_y[6]],
                  'LA':[init_x[7], init_y[7]], 'DEN':[init_x[8], init_y[8]]}
 
-actual = {'BOS': array([ 42.3600825, -71.0588801]),
- 'CHI': array([41.8781136, -87.6297982]),
- 'DC': array([38.9071923,-77.0368707]),
- 'DEN': array([39.7392358, -104.990251]),
- 'LA': array([34.0522342,  -118.2436849]),
- 'MIA': array([25.7616798, -80.1917902]),
- 'NYC': array([40.7127837, -74.0059413]),
- 'SEA': array([47.6062095,  -122.3320708]),
- 'SF': array([37.7749295,-122.4194155])}
+actual = {'BOS': [ 42.3600825, -71.0588801],
+ 'CHI': [41.8781136, -87.6297982],
+ 'DC': [38.9071923,-77.0368707],
+ 'DEN':[39.7392358, -104.990251],
+ 'LA': [34.0522342,  -118.2436849],
+ 'MIA':[25.7616798, -80.1917902],
+ 'NYC': [40.7127837, -74.0059413],
+ 'SEA': [47.6062095,  -122.3320708],
+ 'SF': [37.7749295,-122.4194155]}
+
 
 result= compute_GD(df_mat,mockcity_dict, learning_rate=0.001, precision=100)
 print (result)
